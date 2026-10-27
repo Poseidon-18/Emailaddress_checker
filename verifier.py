@@ -1,6 +1,4 @@
-"""Email deliverability checks: syntax -> DNS -> (optional) SMTP RCPT probe.
-
-The SMTP probe stops after RCPT TO. It never issues DATA, so no message is sent.
+"""Email deliverability checks: syntax -> DNS -> (optional) SMTP RCPT probe.The SMTP probe stops after RCPT TO. It never issues DATA, so no message is sent.
 """
 import ipaddress, os, re, secrets, smtplib, socket, threading, time
 from concurrent.futures import ThreadPoolExecutor
@@ -13,7 +11,7 @@ HELO_HOST = os.getenv("PROBE_HELO", "mail-checker.example.com")
 MAIL_FROM = os.getenv("PROBE_MAIL_FROM", "probe@mail-checker.example.com")
 SMTP_TIMEOUT = float(os.getenv("SMTP_TIMEOUT", "6"))
 DNS_TIMEOUT = float(os.getenv("DNS_TIMEOUT", "4"))
-SMTP_MODE = os.getenv("SMTP_PROBE", "auto").lower()  # auto | on | off
+SMTP_MODE = os.getenv("SMTP_PROBE", "auto").lower()  
 MAX_ADDRESSES = int(os.getenv("MAX_ADDRESSES", "50"))
 
 LOCAL_RE = re.compile(r"^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*$")
@@ -27,7 +25,7 @@ DISPOSABLE = {"mailinator.com", "guerrillamail.com", "10minutemail.com", "tempma
               "trashmail.com", "sharklasers.com", "getnada.com", "throwawaymail.com", "dispostable.com"}
 ROLE = {"admin", "info", "support", "sales", "contact", "postmaster", "webmaster", "noreply", "no-reply", "abuse"}
 
-_catch_all = {}            # domain -> bool
+_catch_all = {}            ## using boolean for domain, simple true-false
 _lock = threading.Lock()
 _smtp_state = {"t": 0, "ok": None, "why": ""}
 
