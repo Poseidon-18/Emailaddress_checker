@@ -63,8 +63,7 @@ small{display:block;color:var(--mute);font-size:.82rem}
 <script>
 const $=id=>document.getElementById(id),LABEL={deliverable:"Likely delivered",undeliverable:"Likely to bounce",unknown:"Unknown"};
 let last=[];
-
-/* Wave: faint acid lines as the page background. Moves only while a check is running. */
+// the wavy background
 const cv=$("wave"),ctx=cv.getContext("2d"),still=matchMedia("(prefers-reduced-motion: reduce)").matches;
 let ph=0,raf=0;
 function draw(){const d=devicePixelRatio||1,w=cv.width=cv.clientWidth*d,h=cv.height=cv.clientHeight*d,n=Math.max(18,Math.round(cv.clientHeight/24));
@@ -77,7 +76,7 @@ function waveOn(){if(!still&&!raf)spin()}
 function waveOff(){cancelAnimationFrame(raf);raf=0;draw()}
 addEventListener("resize",draw);draw();
 
-/* Notice only when mailbox (SMTP) checks are unavailable on this server. */
+/* Notice only when mailbox checks are unavailable on this server. */
 fetch("/api/status").then(r=>r.json()).then(s=>{
  if(!s.smtp_probe){const b=$("banner");b.hidden=false;
   b.textContent="Mailbox checks are off on this server ("+s.detail+"). Syntax and domain checks still run; addresses at real domains will show as Unknown."}
