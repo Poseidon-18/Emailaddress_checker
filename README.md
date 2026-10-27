@@ -8,7 +8,6 @@ Paste a list of email addresses and get a verdict for each one:
 | **Likely to bounce** | Bad syntax, a domain that does not exist or refuses mail, or a server that says the mailbox does not exist. |
 | **Unknown** | Nothing reliable can be said: the server refuses to answer, is greylisting, accepts every address, or the check could not run. |
 
-**Live app:** `<ADD RENDER URL>`
 
 ## How it works
 
