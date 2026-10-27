@@ -87,7 +87,7 @@ def smtp_available():
             socket.create_connection(("gmail-smtp-in.l.google.com", 25), timeout=4).close()
             _smtp_state.update(ok=True, why="Outbound port 25 is open")
         except OSError as e:
-            _smtp_state.update(ok=False, why=f"Outbound port 25 is blocked on this host ({e.__class__.__name__})")
+            __smtp_state.update(ok=False, why="Outbound port 25 is blocked on this host")
         _smtp_state["t"] = time.time()
     return _smtp_state["ok"], _smtp_state["why"]
 
