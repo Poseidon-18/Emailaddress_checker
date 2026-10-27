@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mailbox Check</title>
+<style>
+:root{--bg:#eef1f4;--panel:#fff;--ink:#17202a;--mute:#5d6b79;--line:#d3dae1;--ok:#17734a;--okbg:#dff3e8;--bad:#a3262a;--badbg:#fbe3e3;--unk:#6a4a00;--unkbg:#fdf0c9;--accent:#1f4fd8}
+@media(prefers-color-scheme:dark){:root{--bg:#10151b;--panel:#18202a;--ink:#e8edf2;--mute:#9aa8b6;--line:#2c3744;--ok:#6fd6a0;--okbg:#14382a;--bad:#ff9b9d;--badbg:#401a1c;--unk:#f2cf6b;--unkbg:#3b3010;--accent:#8aa8ff}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:1.9rem;margin:0 0 4px;letter-spacing:-.02em}p.sub{color:var(--mute);margin:0 0 20px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+textarea{width:100%;min-height:150px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:10px;background:var(--bg);color:var(--ink);font:14px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.row{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+button{font:inherit;border-radius:6px;padding:8px 16px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}button:disabled{opacity:.6;cursor:wait}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#banner{margin:0 0 16px;padding:10px 14px;border-radius:8px;font-size:.92rem;border:1px solid var(--line);background:var(--unkbg);color:var(--unk)}
+#banner.on{background:var(--okbg);color:var(--ok)}
+.sum{display:flex;gap:10px;margin:22px 0 10px;flex-wrap:wrap}.sum span{padding:4px 12px;border-radius:999px;font-weight:600;font-size:.9rem}
+.tag{display:inline-block;padding:2px 10px;border-radius:4px;font-weight:700;font-size:.82rem;border:1.5px solid currentColor;white-space:nowrap}
+.deliverable{color:var(--ok);background:var(--okbg)}.undeliverable{color:var(--bad);background:var(--badbg)}.unknown{color:var(--unk);background:var(--unkbg)}
+.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.93rem}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mute);font-weight:600}
+td.em{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86rem;word-break:break-all}
+small{display:block;color:var(--mute)}.err{color:var(--bad);margin-top:10px}
+</style></head><body><main>
+<h1>Mailbox Check</h1>
+<p class="sub">Paste email addresses (one per line, or separated by commas). Up to {{ max_addresses }} per run. No messages are ever sent.</p>
+<div id="banner" role="status">Checking what this server can verify…</div>
+<div class="panel">
+<label for="in" style="font-weight:600">Addresses</label>
+<textarea id="in" placeholder="jane@example.com&#10;someone@gmail.com"></textarea>
+<div class="row"><button class="primary" id="go">Check addresses</button><button id="demo" type="button">Insert examples</button>
+<button id="csv" type="button" hidden>Download CSV</button></div>
+<div id="err" class="err" role="alert"></div></div>
+<div id="out" hidden>
+<div class="sum" id="sum"></div>
+<div class="panel wrap"><table><thead><tr><th>Address</th><th>Result</th><th>Why</th></tr></thead><tbody id="rows"></tbody></table></div>
+<p class="sub" style="margin-top:12px"><b>Unknown</b> means the mail server would not confirm the mailbox. It is not a verdict that the address is bad.</p>
+</div></main>
+<script>
+const $=id=>document.getElementById(id),LABEL={deliverable:"Likely delivered",undeliverable:"Likely to bounce",unknown:"Unknown"};
+let last=[];
+fetch("/api/status").then(r=>r.json()).then(s=>{const b=$("banner");b.className=s.smtp_probe?"on":"";
+b.textContent=s.smtp_probe?"Full checks available: syntax, DNS and mailbox (SMTP) probe.":
+"Limited mode: "+s.detail+". Syntax and domain checks still run; mailboxes will show as Unknown."}).catch(()=>{$("banner").textContent="Could not reach the server."});
+$("demo").onclick=()=>{$("in").value="not-an-email\nhello@this-domain-should-not-exist-98213.com\nsomeone@gmail.com\nname@example.com\nwebmaster@iana.org"};
+function cell(tr,txt,cls){const td=document.createElement("td");if(cls)td.className=cls;td.textContent=txt;tr.appendChild(td);return td}
+$("go").onclick=async()=>{
+ const btn=$("go");$("err").textContent="";btn.disabled=true;btn.textContent="Checking…";
+ try{const r=await fetch("/api/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({emails:$("in").value})});
+  const d=await r.json();if(!r.ok)throw new Error(d.error||"Request failed");
+  last=d.results;$("out").hidden=false;$("csv").hidden=false;
+  $("sum").replaceChildren(...["deliverable","undeliverable","unknown"].map(k=>{const s=document.createElement("span");s.className=k;s.textContent=d.summary[k]+" "+LABEL[k].toLowerCase();return s}));
+  const body=$("rows");body.replaceChildren();
+  d.results.forEach(x=>{const tr=document.createElement("tr");cell(tr,x.email,"em");
+   const t=document.createElement("td"),tag=document.createElement("span");tag.className="tag "+x.status;tag.textContent=LABEL[x.status];t.appendChild(tag);tr.appendChild(t);
+   const w=cell(tr,x.reason);if(x.flags.length){const f=document.createElement("small");f.textContent="Flags: "+x.flags.join(", ");w.appendChild(f)}
+   if(x.smtp){const f=document.createElement("small");f.textContent="Server said: "+x.smtp;w.appendChild(f)}body.appendChild(tr)});
+  if(d.truncated)$("err").textContent="Only the first "+d.limit+" addresses were checked."
+ }catch(e){$("err").textContent=e.message}finally{btn.disabled=false;btn.textContent="Check addresses"}};
+$("csv").onclick=()=>{const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+ const rows=[["email","status","reason","mx","smtp_reply","flags"],...last.map(x=>[x.email,x.status,x.reason,x.mx,x.smtp,x.flags.join(";")])];
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([rows.map(r=>r.map(q).join(",")).join("\n")],{type:"text/csv"}));a.download="results.csv";a.click()};
+</script></body></html>
