@@ -42,11 +42,9 @@ pytest                   # unit tests (DNS/SMTP are mocked)
 
 Many home ISPs block port 25 too. The banner tells you.
 
-Optional environment variables: `SMTP_PROBE` (`auto`|`on`|`off`), `PROBE_HELO`, `PROBE_MAIL_FROM` (set these to a domain you own for best results), `SMTP_TIMEOUT`, `MAX_ADDRESSES`.
+Optional environment variables: `SMTP_PROBE ` (`auto`|`on`|`off`), `PROBE_HELO`, `PROBE_MAIL_FROM` (set these to a domain you own for best results), `SMTP_TIMEOUT`, `MAX_ADDRESSES`.
 
-## Deploy (Render)
-
-New Web Service → connect this repo → Render reads `render.yaml`. Start command: `gunicorn app:app --workers 1 --threads 8 --timeout 120`.
+## Deploy (Render) : https://emailaddress-checker.onrender.com/
 
 ## API
 
